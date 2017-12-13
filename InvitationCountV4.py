@@ -57,16 +57,21 @@ for x in range(len(first_col)):
     c = 1  # c = 2
 
     for i in range(0, length):  # AND pt.Status = 2
+        # Query for Distribution checking
         c1.execute("""
-               SELECT Project_ID, ds.id DS_ID, T.id TG_ID,T.name TG_Name,pt.status as TG_Status, T.LastTotalSize TG_LastTotalSize
-               FROM Targetgroups T, Projects_Targetgroups pt, DirectoryServers ds
+               SELECT Project_ID, ds.id DS_ID, T.id TG_ID, T.name TG_Name, pt.status TG_Status, T.LastTotalSize TG_LastTotalSize,
+               att.Name att_name, Threshold
+               FROM Targetgroups T, Projects_Targetgroups pt, DirectoryServers ds, DirServerAttributes att
                WHERE T.id= pt.Targetgroup_ID
                AND ds.id = T.DirServer_ID
                AND Project_ID = %d
                AND T.ID = %d
-               AND T.DirServer_ID in (SELECT att.DirServer_ID FROM  DirServerAttributes att WHERE InvitationDistributor = 2)
-               ORDER BY TG_Name,Project_ID""", (c1_list[i][1], c1_list[i][3]))
+               AND T.DirServer_ID = att.DirServer_ID
+               AND att.InvitationDistributor = 2
+               ORDER BY Project_ID, TG_Name""", (c1_list[i][1], c1_list[i][3]))
         c3_list = c1.fetchall()
+        # print(c3_list[0][6])
+        # print(c3_list[0][7])
         length3 = len(c3_list)
         # Sunday Dec 10 ******************************************************************
         c1.execute("""
@@ -80,7 +85,7 @@ for x in range(len(first_col)):
         if length3 > 0:
             # print("This is distribution")
             c1.execute("""
-                      SELECT R.Project_ID,R.Targetgroup_ID, R.Interval_No, SUM (R.[EmailToSend]) as 'ExpMailSent'
+                      SELECT R.Project_ID, R.Targetgroup_ID, R.Interval_No, SUM(R.[EmailToSend]) as 'ExpMailSent'
                       FROM RespondentLog R, Projects P
                       WHERE len (R.ProcessingLog) > 0
                       AND Project_ID = %d 
@@ -127,7 +132,7 @@ for x in range(len(first_col)):
             workSheet.cell(row=r, column=c).value = c1_list[i][5]  # DS Size
             c = c + 2
             # print(i)
-            invLogicType = c6_list[0][6]      # c1_list[i][6] **********************************************************
+            invLogicType = c6_list[0][6]      # c1_list[i][6] InvitationLogicType *********************
             if invLogicType == 2:
                 tgType = "Hard"
             else:
@@ -199,7 +204,9 @@ for x in range(len(first_col)):
                 workSheet.cell(row=r, column=c).value = tgSizeMPM[i]  # L = J
             elif c1_list[i][9] != "" and length3 > 0:
                 workSheet.cell(row=r, column=c).value = c4_list[0][3]  # Distribution
-                comment = Comment('Distribution enabled', 'MetatudeAsia')
+                attributeName = c3_list[0][6]
+                threshold = str(c3_list[0][7])
+                comment = Comment('Inv. Distributor- ' + attributeName + '\n' + 'Threshold- ' + threshold, 'MetatudeAsia')
                 workSheet.cell(row=r, column=c).comment = comment
             c = c + 1
             workSheet.cell(row=r, column=c).value = c2_list[0][4]  # Actual Mail Sent
