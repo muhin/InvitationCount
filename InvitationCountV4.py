@@ -10,7 +10,7 @@ import openpyxl
 from openpyxl.comments import Comment
 
 q = '"'
-startDate = "2017-02-01"
+startDate = "2017-02-01"  # yyyy-mm-dd
 endDate = "2017-03-01"
 groupName = []
 pID = []
@@ -26,11 +26,32 @@ updateWb = openpyxl.load_workbook("G:\\PycharmProjects\\InvitationCount\\update.
 conn = pymssql.connect("localhost", "sa", "admin", "mds_results")
 c1 = conn.cursor()
 
+
+def processIntervalName(dbIntervalName):
+    monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October',
+                     'November', 'December']
+    intervalNameAsList = dbIntervalName.split(' ')
+    monthName = intervalNameAsList[0]
+    if monthName in monthNames:
+        finalIntervalName = intervalNameAsList[0] + ', ' + intervalNameAsList[1]
+        return finalIntervalName
+    else:
+        intervalNameLength = len(dbIntervalName)
+        if intervalNameLength == 11:
+            finalIntervalName = dbIntervalName[0:6] + ', ' + dbIntervalName[7:]
+            return finalIntervalName
+        elif intervalNameLength == 12:
+            finalIntervalName = dbIntervalName[0:7] + ', ' + dbIntervalName[8:]
+            return finalIntervalName
+        elif intervalNameLength >= 5 or intervalNameLength <= 7:
+            return dbIntervalName
+
+
 for x in range(len(first_col)):
     groupName.append(first_col[x].value)
     workSheet = updateWb.get_sheet_by_name(groupName[x])
     print("--- Group Name " + groupName[x] + " ---")
-    # ******************** 1st Query ********************#
+    # ******************** 1st Query ******************** #
     c1.execute("""
                SELECT DISTINCT 
                 P.[GroupName],
@@ -47,8 +68,14 @@ for x in range(len(first_col)):
                 WHERE len (R.ProcessingLog) > 0 AND R.[CreationDate] >= %s AND R.[CreationDate] < %s
                 AND P.ID = R.Project_ID
                 AND P.GroupName = %s
+                 and R.[TGCountUnique] in (
+                      select max ([TGCountUnique]) FROM RespondentLog R, Projects P
+                      where len (R.ProcessingLog) > 0 AND R.[CreationDate] >= %s AND R.[CreationDate] < %s
+                      AND P.ID = R.Project_ID
+                      GROUP BY R.Targetgroup_ID, R.[Interval_No]
+                      )
                 ORDER BY P.GroupName, R.Project_ID, R.Interval_No, R.Targetgroup_ID""",
-               (startDate, endDate, groupName[x]))
+               (startDate, endDate, groupName[x], startDate, endDate))
 
     c1_list = c1.fetchall()
     length = len(c1_list)
@@ -77,7 +104,7 @@ for x in range(len(first_col)):
         c1.execute("""
                 SELECT [ID],[Project_ID],[Targetgroup_ID],[OptionType],[SampleSize],[Status],[InvitationLogicType] 
                 FROM Projects_Targetgroups
-                WHERE [Status] = 2
+                WHERE [Status] in(2,4)
                 AND [Project_ID] = %d
                 AND [Targetgroup_ID] = %d""", (c1_list[i][1], c1_list[i][3]))
         c6_list = c1.fetchall()
@@ -90,9 +117,10 @@ for x in range(len(first_col)):
                       WHERE len (R.ProcessingLog) > 0
                       AND Project_ID = %d 
                       AND R.Interval_No = %d
+                      AND [Targetgroup_ID] = %d
                       AND P.ID = R.Project_ID
                       GROUP BY R.Interval_No, R.Targetgroup_ID, R.Project_ID
-                      ORDER BY R.Interval_No""", (c1_list[i][1], c1_list[i][4]))
+                      ORDER BY R.Interval_No""", (c1_list[i][1], c1_list[i][4], c1_list[i][3]))
             c4_list = c1.fetchall()
             # print("ExpMailDist: " + str(c4_list[0][3]))
 
@@ -106,7 +134,7 @@ for x in range(len(first_col)):
             # print("This is NULL")
             pID.append(c1_list[i][1])
             intervalNo.append(c1_list[i][4])
-            tgSizeMPM.append(c1_list[i][7]) # c1_list[i][8])*********************************************************
+            tgSizeMPM.append(c1_list[i][7])  # c1_list[i][8])*********************************************************
             continue
         else:
             c1.execute("""
@@ -115,7 +143,10 @@ for x in range(len(first_col)):
                       where Project_ID = %d
                       AND IntervalNo = %d""", (c1_list[i][1], c1_list[i][4]))
             c5_list = c1.fetchall()
-            workSheet.cell(row=r, column=c).value = c5_list[0][2]  # Interval Name
+            # workSheet.cell(row=r, column=c).value = c5_list[0][2]  # Interval Name
+            # Interval Name Enhancement *****************************************************************************
+            intervalName = processIntervalName(c5_list[0][2])
+            workSheet.cell(row=r, column=c).value = intervalName  # Interval Name
             # print("This is interval: " + c5_list[0][2])
 
             c = c + 1
@@ -181,6 +212,7 @@ for x in range(len(first_col)):
                        AND T.id = R.Targetgroup_ID
                        AND T.id = %d
                        AND T.DirServer_ID = D.id
+                       AND R.EmailCounter > -1
                        GROUP BY R.Project_ID, R.Interval_No, T.ID, T.Name, D.Name
                        ORDER BY R.Project_ID, R.Interval_No""", (pID[i], intervalNo[i], tgID[i]))
             c2_list = c1.fetchall()
@@ -204,9 +236,10 @@ for x in range(len(first_col)):
                 workSheet.cell(row=r, column=c).value = tgSizeMPM[i]  # L = J
             elif c1_list[i][9] != "" and length3 > 0:
                 workSheet.cell(row=r, column=c).value = c4_list[0][3]  # Distribution
+                # print("Expected: " + str(c4_list[0][3]))
                 attributeName = c3_list[0][6]
                 threshold = str(c3_list[0][7])
-                comment = Comment('Inv. Distributor- ' + attributeName + '\n' + 'Threshold- ' + threshold, 'MetatudeAsia')
+                comment = Comment('Inv. Distributor- ' + attributeName + '\n' + 'Threshold- ' + threshold, 'Metatude@sia')
                 workSheet.cell(row=r, column=c).comment = comment
             c = c + 1
             workSheet.cell(row=r, column=c).value = c2_list[0][4]  # Actual Mail Sent
