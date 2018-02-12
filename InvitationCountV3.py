@@ -98,7 +98,7 @@ for x in range(len(first_col)):
         c1.execute("""
                 SELECT [ID],[Project_ID],[Targetgroup_ID],[OptionType],[SampleSize],[Status],[InvitationLogicType] 
                 FROM Projects_Targetgroups
-                WHERE [Status] = 2
+                WHERE [Status] in(2,4)
                 AND [Project_ID] = %d
                 AND [Targetgroup_ID] = %d""", (c1_list[i][1], c1_list[i][3]))
         c6_list = c1.fetchall()
