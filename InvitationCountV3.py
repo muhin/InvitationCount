@@ -17,6 +17,9 @@ pID = []
 intervalNo = []
 tgID = []
 tgSizeMPM = []
+c1_list = []
+c2_list = []
+c5_list = []
 readWb = openpyxl.load_workbook("G:\\PycharmProjects\\InvitationCount\\readData.xlsx")
 readSheet = readWb.get_sheet_by_name("groupName")
 first_col = readSheet['A']
@@ -63,13 +66,20 @@ for x in range(len(first_col)):
                 R.[TGCountAll],
                 R.[TGCountUnique],
                 R.[SampleCount],
-                R.[SampleType]
+                R.[SampleType],
+                P.[ProjectType]
                 FROM RespondentLog R, Projects P
                 WHERE len (R.ProcessingLog) > 0 AND R.[CreationDate] >= %s AND R.[CreationDate] < %s
                 AND P.ID = R.Project_ID
                 AND P.GroupName = %s
+                 and R.[TGCountUnique] in (
+                      select max ([TGCountUnique]) FROM RespondentLog R, Projects P
+                      where len (R.ProcessingLog) > 0 AND R.[CreationDate] >= %s AND R.[CreationDate] < %s
+                      AND P.ID = R.Project_ID
+                      GROUP BY R.Targetgroup_ID, R.[Interval_No]
+                      )
                 ORDER BY P.GroupName, R.Project_ID, R.Interval_No, R.Targetgroup_ID""",
-               (startDate, endDate, groupName[x]))
+               (startDate, endDate, groupName[x], startDate, endDate))
 
     c1_list = c1.fetchall()
     length = len(c1_list)
@@ -78,6 +88,7 @@ for x in range(len(first_col)):
     c = 1  # c = 2
 
     for i in range(0, length):  # AND pt.Status = 2
+        print("Project Type: " + str(c1_list[i][10]))
         # Query for Distribution checking
         c1.execute("""
                SELECT Project_ID, ds.id DS_ID, T.id TG_ID, T.name TG_Name, pt.status TG_Status, T.LastTotalSize TG_LastTotalSize,
@@ -124,7 +135,7 @@ for x in range(len(first_col)):
         tgID.append(c1_list[i][3])  # TG IDs
         tgIDasString = str(tgID[i])
         intervalNoZero = c1_list[i][4]
-        if tgIDasString == "None" or intervalNoZero == 0:
+        if tgIDasString == "None": # or intervalNoZero == 0:
             # print("This is NULL")
             pID.append(c1_list[i][1])
             intervalNo.append(c1_list[i][4])
@@ -139,7 +150,10 @@ for x in range(len(first_col)):
             c5_list = c1.fetchall()
             # workSheet.cell(row=r, column=c).value = c5_list[0][2]  # Interval Name
             # Interval Name Enhancement *****************************************************************************
-            intervalName = processIntervalName(c5_list[0][2])
+            if c1_list[i][10] == 1:
+                intervalName = "NA"
+            else:
+                intervalName = processIntervalName(c5_list[0][2])
             workSheet.cell(row=r, column=c).value = intervalName  # Interval Name
             # print("This is interval: " + c5_list[0][2])
 
@@ -150,7 +164,11 @@ for x in range(len(first_col)):
             c = c + 1
             workSheet.cell(row=r, column=c).value = (str(c1_list[i][2]))  # project name
             c = c + 1
-            workSheet.cell(row=r, column=c).value = c1_list[i][4]  # interval No.
+            if c1_list[i][4] == 0:
+                intervalNumber = "NA"
+            else:
+                intervalNumber = c1_list[i][4]
+            workSheet.cell(row=r, column=c).value = intervalNumber  # c1_list[i][4]  # interval No.
             intervalNo.append(c1_list[i][4])
             # print(intervalNo[i])
             c = c + 2
@@ -158,11 +176,12 @@ for x in range(len(first_col)):
             c = c + 2
             # print(i)
             invLogicType = c6_list[0][6]      # c1_list[i][6] InvitationLogicType *********************
-            if invLogicType == 2:
+            if invLogicType == 1:
+                tgType = "Soft"
+            elif invLogicType == 2:
                 tgType = "Hard"
             else:
-                tgType = "Soft"
-
+                tgType = "NA"
             workSheet.cell(row=r, column=c).value = tgType  # TG Type, if 2 then Hard Soft otherwise
             c = c + 1
             workSheet.cell(row=r, column=c).value = c1_list[i][6]  # c1_list[i][7] ******************
@@ -206,6 +225,7 @@ for x in range(len(first_col)):
                        AND T.id = R.Targetgroup_ID
                        AND T.id = %d
                        AND T.DirServer_ID = D.id
+                       AND R.EmailCounter > -1
                        GROUP BY R.Project_ID, R.Interval_No, T.ID, T.Name, D.Name
                        ORDER BY R.Project_ID, R.Interval_No""", (pID[i], intervalNo[i], tgID[i]))
             c2_list = c1.fetchall()
@@ -226,10 +246,10 @@ for x in range(len(first_col)):
             elif c1_list[i][9] == "Target" and length3 == 0:
                 workSheet.cell(row=r, column=c).value = tgSizeMPM[i] * 1.25  # L = K * 1.25
             elif c1_list[i][9] == "Fixed" and length3 == 0:
-                workSheet.cell(row=r, column=c).value = tgSizeMPM[i]  # L = J
+                workSheet.cell(row=r, column=c).value = c1_list[i][8]  # L = K
             elif c1_list[i][9] != "" and length3 > 0:
                 workSheet.cell(row=r, column=c).value = c4_list[0][3]  # Distribution
-                print("Expected: " + str(c4_list[0][3]))
+                # print("Expected: " + str(c4_list[0][3]))
                 attributeName = c3_list[0][6]
                 threshold = str(c3_list[0][7])
                 comment = Comment('Inv. Distributor- ' + attributeName + '\n' + 'Threshold- ' + threshold, 'Metatude@sia')
