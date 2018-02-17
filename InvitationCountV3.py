@@ -182,7 +182,7 @@ for x in range(len(first_col)):
                 tgType = "Hard"
             else:
                 tgType = "NA"
-            workSheet.cell(row=r, column=c).value = tgType  # TG Type, if 2 then Hard Soft otherwise
+            workSheet.cell(row=r, column=c).value = tgType  # TG Type, if 1 = soft, 2 = hard
             c = c + 1
             workSheet.cell(row=r, column=c).value = c1_list[i][6]  # c1_list[i][7] ******************
             c = c + 1
