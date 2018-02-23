@@ -21,7 +21,7 @@ c1_list = []
 c2_list = []
 c5_list = []
 readWb = openpyxl.load_workbook("G:\\PycharmProjects\\InvitationCount\\readData.xlsx")
-readSheet = readWb.get_sheet_by_name("groupName")
+readSheet = readWb["groupName"]
 first_col = readSheet['A']
 
 updateWb = openpyxl.load_workbook("G:\\PycharmProjects\\InvitationCount\\update.xlsx")
@@ -32,7 +32,7 @@ c1 = conn.cursor()
 
 def processIntervalName(dbIntervalName):
     monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October',
-                     'November', 'December']
+                  'November', 'December']
     intervalNameAsList = dbIntervalName.split(' ')
     monthName = intervalNameAsList[0]
     if monthName in monthNames:
@@ -50,9 +50,17 @@ def processIntervalName(dbIntervalName):
             return dbIntervalName
 
 
+def AdhocIntervalName(inputDate):
+    monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October',
+                  'November', 'December']
+    listDate = inputDate.split("-")
+    monthNameIndex = int(listDate[1]) - 1
+    return monthNames[monthNameIndex] + ", " + str(listDate[0])
+
+
 for x in range(len(first_col)):
     groupName.append(first_col[x].value)
-    workSheet = updateWb.get_sheet_by_name(groupName[x])
+    workSheet = updateWb[groupName[x]]
     print("--- Group Name " + groupName[x] + " ---")
     # ******************** 1st Query ******************** #
     c1.execute("""
@@ -135,7 +143,7 @@ for x in range(len(first_col)):
         tgID.append(c1_list[i][3])  # TG IDs
         tgIDasString = str(tgID[i])
         intervalNoZero = c1_list[i][4]
-        if tgIDasString == "None": # or intervalNoZero == 0:
+        if tgIDasString == "None":  # or intervalNoZero == 0:
             # print("This is NULL")
             pID.append(c1_list[i][1])
             intervalNo.append(c1_list[i][4])
@@ -151,7 +159,8 @@ for x in range(len(first_col)):
             # workSheet.cell(row=r, column=c).value = c5_list[0][2]  # Interval Name
             # Interval Name Enhancement *****************************************************************************
             if c1_list[i][10] == 1:
-                intervalName = "NA"
+                # intervalName = "NA"
+                intervalName = AdhocIntervalName(startDate)
             else:
                 intervalName = processIntervalName(c5_list[0][2])
             workSheet.cell(row=r, column=c).value = intervalName  # Interval Name
@@ -175,7 +184,7 @@ for x in range(len(first_col)):
             workSheet.cell(row=r, column=c).value = c1_list[i][5]  # DS Size
             c = c + 2
             # print(i)
-            invLogicType = c6_list[0][6]      # c1_list[i][6] InvitationLogicType *********************
+            invLogicType = c6_list[0][6]  # c1_list[i][6] InvitationLogicType *********************
             if invLogicType == 1:
                 tgType = "Soft"
             elif invLogicType == 2:
@@ -252,7 +261,8 @@ for x in range(len(first_col)):
                 # print("Expected: " + str(c4_list[0][3]))
                 attributeName = c3_list[0][6]
                 threshold = str(c3_list[0][7])
-                comment = Comment('Inv. Distributor- ' + attributeName + '\n' + 'Threshold- ' + threshold, 'Metatude@sia')
+                comment = Comment('Inv. Distributor- ' + attributeName + '\n' + 'Threshold- ' + threshold,
+                                  'Metatude@sia')
                 workSheet.cell(row=r, column=c).comment = comment
             c = c + 1
             workSheet.cell(row=r, column=c).value = c2_list[0][4]  # Actual Mail Sent
