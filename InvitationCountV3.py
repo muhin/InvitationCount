@@ -58,6 +58,14 @@ def AdhocIntervalName(inputDate):
     return monthNames[monthNameIndex] + ", " + str(listDate[0])
 
 
+def fileReName(inputDate):
+    monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October',
+                  'November', 'December']
+    listDate = inputDate.split("-")
+    monthNameIndex = int(listDate[1]) - 1
+    return monthNames[monthNameIndex] + ' ' + str(listDate[0])
+
+
 for x in range(len(first_col)):
     groupName.append(first_col[x].value)
     workSheet = updateWb[groupName[x]]
@@ -275,6 +283,8 @@ for x in range(len(first_col)):
     c2_list.clear()
     c5_list.clear()
     tgSizeMPM.clear()
-updateWb.save('update.xlsx')
+fileName = fileReName(startDate)
+updateWb.save('Report on Invitation Count_' + fileName + '.xlsx')
+#  updateWb.save('update.xlsx')
 print("All Done... :D")
 conn.close()
