@@ -11,12 +11,15 @@ import openpyxl
 from openpyxl.comments import Comment
 from StringProcessing import processIntervalName, adhocIntervalName, fileReName
 
-
-print("Enter Start & End date to start Invitation Count Monitoring for that month.\nUse this format only (yyyy-mm-dd)")
-print("Start Date: ")
+print('Enter Start & End date to start Invitation Count Monitoring for that month.\nUse this format only (yyyy-mm-dd)')
+print('Start Date: ')
 startDate = input()
-print("End Date: ")
+print('End Date: ')
 endDate = input()
+print('Enter path of excel file to read customer names: ')
+readData = input()
+print('Enter path of excel file which is used as template: ')
+updateData = input()
 q = '"'
 # startDate = "2017-02-01"  # yyyy-mm-dd
 # endDate = "2017-03-01"
@@ -28,13 +31,13 @@ tgSizeMPM = []
 c1_list = []
 c2_list = []
 c5_list = []
-readWb = openpyxl.load_workbook("G:\\PycharmProjects\\InvitationCount\\readData.xlsx")
-readSheet = readWb["groupName"]
+readWb = openpyxl.load_workbook(readData)   # ('G:\\PycharmProjects\\InvitationCount\\readData.xlsx')
+readSheet = readWb['groupName']
 first_col = readSheet['A']
 
-updateWb = openpyxl.load_workbook("G:\\PycharmProjects\\InvitationCount\\update.xlsx")
+updateWb = openpyxl.load_workbook(updateData)  # ('G:\\PycharmProjects\\InvitationCount\\update.xlsx')
 
-conn = pymssql.connect("localhost", "sa", "admin", "mds_results")
+conn = pymssql.connect('localhost', 'sa', 'admin', 'mds_results')
 c1 = conn.cursor()
 
 
@@ -258,8 +261,9 @@ for x in range(len(first_col)):
 fileName = fileReName(startDate)
 updateWb.save('Report on Invitation Count_' + fileName + '.xlsx')
 # updateWb.save('update.xlsx')
-print("All Done... :D")
+print('All Done... :)')
+print('Please find the report named: Report on Invitation Count_' + fileName + '.xlsx')
 conn.close()
-print("Press any key to Exit...")
+print('Press any key to Exit')
 temp = input()
 sys.exit(0)
