@@ -10,6 +10,7 @@ import openpyxl
 from openpyxl.comments import Comment
 from StringProcessing import processIntervalName, adhocIntervalName, fileReName
 
+
 q = '"'
 startDate = "2017-02-01"  # yyyy-mm-dd
 endDate = "2017-03-01"
