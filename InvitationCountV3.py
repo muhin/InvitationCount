@@ -8,6 +8,7 @@ Created on Wed Oct 25 11:56:48 2017
 import pymssql
 import openpyxl
 from openpyxl.comments import Comment
+from StringProcessing import processIntervalName, adhocIntervalName, fileReName
 
 q = '"'
 startDate = "2017-02-01"  # yyyy-mm-dd
@@ -28,42 +29,6 @@ updateWb = openpyxl.load_workbook("G:\\PycharmProjects\\InvitationCount\\update.
 
 conn = pymssql.connect("localhost", "sa", "admin", "mds_results")
 c1 = conn.cursor()
-
-
-def processIntervalName(dbIntervalName):
-    monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October',
-                  'November', 'December']
-    intervalNameAsList = dbIntervalName.split(' ')
-    monthName = intervalNameAsList[0]
-    if monthName in monthNames:
-        finalIntervalName = intervalNameAsList[0] + ', ' + intervalNameAsList[1]
-        return finalIntervalName
-    else:
-        intervalNameLength = len(dbIntervalName)
-        if intervalNameLength == 11:
-            finalIntervalName = dbIntervalName[0:6] + ', ' + dbIntervalName[7:]
-            return finalIntervalName
-        elif intervalNameLength == 12:
-            finalIntervalName = dbIntervalName[0:7] + ', ' + dbIntervalName[8:]
-            return finalIntervalName
-        elif intervalNameLength >= 5 or intervalNameLength <= 7:
-            return dbIntervalName
-
-
-def AdhocIntervalName(inputDate):
-    monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October',
-                  'November', 'December']
-    listDate = inputDate.split("-")
-    monthNameIndex = int(listDate[1]) - 1
-    return monthNames[monthNameIndex] + ", " + str(listDate[0])
-
-
-def fileReName(inputDate):
-    monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October',
-                  'November', 'December']
-    listDate = inputDate.split("-")
-    monthNameIndex = int(listDate[1]) - 1
-    return monthNames[monthNameIndex] + ' ' + str(listDate[0])
 
 
 for x in range(len(first_col)):
@@ -104,7 +69,7 @@ for x in range(len(first_col)):
     c = 1  # c = 2
 
     for i in range(0, length):  # AND pt.Status = 2
-        print("Project Type: " + str(c1_list[i][10]))
+        # print("Project Type: " + str(c1_list[i][10]))
         # Query for Distribution checking
         c1.execute("""
                SELECT Project_ID, ds.id DS_ID, T.id TG_ID, T.name TG_Name, pt.status TG_Status, T.LastTotalSize TG_LastTotalSize,
@@ -168,7 +133,7 @@ for x in range(len(first_col)):
             # Interval Name Enhancement *****************************************************************************
             if c1_list[i][10] == 1:
                 # intervalName = "NA"
-                intervalName = AdhocIntervalName(startDate)
+                intervalName = adhocIntervalName(startDate)
             else:
                 intervalName = processIntervalName(c5_list[0][2])
             workSheet.cell(row=r, column=c).value = intervalName  # Interval Name
@@ -285,6 +250,6 @@ for x in range(len(first_col)):
     tgSizeMPM.clear()
 fileName = fileReName(startDate)
 updateWb.save('Report on Invitation Count_' + fileName + '.xlsx')
-#  updateWb.save('update.xlsx')
+# updateWb.save('update.xlsx')
 print("All Done... :D")
 conn.close()
