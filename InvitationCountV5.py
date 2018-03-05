@@ -9,7 +9,7 @@ import sys
 import pymssql
 import openpyxl
 from openpyxl.comments import Comment
-from StringProcessing import processIntervalName, adhocIntervalName, fileReName
+from StringProcessing import processIntervalName, adhocIntervalName, fileReName, processEncryptedPassword
 
 print('Enter Start & End date to start Invitation Count Monitoring for that month.\nUse this format only (yyyy-mm-dd)')
 print('Start Date: ')
@@ -37,7 +37,16 @@ first_col = readSheet['A']
 
 updateWb = openpyxl.load_workbook(updateData)  # ('G:\\PycharmProjects\\InvitationCount\\update.xlsx')
 
-conn = pymssql.connect('localhost', 'sa', 'admin', 'mds_results')
+f = open('credential.txt', 'r')
+msg = f.read()
+msgSplit = msg.split(',')
+dbHost = str(msgSplit[0])
+dbUser = str(msgSplit[1])
+dbName = str(msgSplit[3])
+f.close()
+dbPassword = processEncryptedPassword()
+
+conn = pymssql.connect(dbHost, dbUser, dbPassword, dbName)
 c1 = conn.cursor()
 
 

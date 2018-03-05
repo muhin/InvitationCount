@@ -4,6 +4,8 @@ Created on 03 Mar 2018 7:37 AM
 @author: muhin
 """
 
+from cryptography.fernet import Fernet
+
 
 def processIntervalName(dbIntervalName):
     monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October',
@@ -38,4 +40,17 @@ def fileReName(inputDate):
                   'November', 'December']
     listDate = inputDate.split("-")
     monthNameIndex = int(listDate[1]) - 1
-    return monthNames[monthNameIndex] + ' ' + str(listDate[0])
+
+
+def processEncryptedPassword():
+    f = open('credential.txt', 'r')
+    msg = f.read()
+    msgSplit = msg.split(',')
+    # print(msgSplit[2])
+
+    bytePassword = bytes(msgSplit[2], 'utf-8')
+    fernetObj = Fernet("hPh9eN7EXljKDTJ4u4KDURBUQ4IqE42f3IBjwDdzb08=")
+    decryptedPassword = fernetObj.decrypt(bytePassword)
+    stringDecryptedPassword = str(decryptedPassword, 'utf-8')
+    f.close()
+    return stringDecryptedPassword
