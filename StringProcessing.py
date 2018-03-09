@@ -30,7 +30,7 @@ def processIntervalName(dbIntervalName):
 def adhocIntervalName(inputDate):
     monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October',
                   'November', 'December']
-    listDate = inputDate.split("-")
+    listDate = inputDate.split('-')
     monthNameIndex = int(listDate[1]) - 1
     return monthNames[monthNameIndex] + ", " + str(listDate[0])
 
@@ -38,7 +38,7 @@ def adhocIntervalName(inputDate):
 def fileReName(inputDate):
     monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October',
                   'November', 'December']
-    listDate = inputDate.split("-")
+    listDate = inputDate.split('-')
     monthNameIndex = int(listDate[1]) - 1
 
 
@@ -46,11 +46,23 @@ def processEncryptedPassword():
     f = open('credential.txt', 'r')
     msg = f.read()
     msgSplit = msg.split(',')
-    # print(msgSplit[2])
-
     bytePassword = bytes(msgSplit[2], 'utf-8')
     fernetObj = Fernet("hPh9eN7EXljKDTJ4u4KDURBUQ4IqE42f3IBjwDdzb08=")
     decryptedPassword = fernetObj.decrypt(bytePassword)
     stringDecryptedPassword = str(decryptedPassword, 'utf-8')
     f.close()
     return stringDecryptedPassword
+
+
+def returnEndDate(startDate):
+    startDateAsList = startDate.split('-')
+    intNextMonth = int(startDateAsList[1]) + 1
+    if intNextMonth == 13:
+        intNextYear = int(startDateAsList[0]) + 1
+        stringNextYear = str(intNextYear)
+        stringNextMonth = str(stringNextYear + '-' + '01-01')
+        return stringNextMonth
+    else:
+        nextMonthFormat = '{:02d}'.format(intNextMonth)
+        stringNextMonth = str(startDateAsList[0] + '-' + nextMonthFormat + '-' + startDateAsList[2])
+        return stringNextMonth
