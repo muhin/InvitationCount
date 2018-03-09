@@ -5,21 +5,25 @@ Created on Wed Oct 25 11:56:48 2017
 @author: muhin
 """
 
-import sys
 import pymssql
 import openpyxl
 from openpyxl.comments import Comment
-from StringProcessing import processIntervalName, adhocIntervalName, fileReName, processEncryptedPassword
+from StringProcessing import processIntervalName, adhocIntervalName, fileReName, processEncryptedPassword, returnEndDate
 
-print('Enter Start & End date to start Invitation Count Monitoring for that month.\nUse this format only (yyyy-mm-dd)')
+print('Enter date to generate Invitation Count Report for that month.\nUse this format only (yyyy-mm-dd)')
 print('Start Date: ')
 startDate = input()
-print('End Date: ')
-endDate = input()
-print('Enter path of excel file to read customer names: ')
+endDate = returnEndDate(startDate)
+print('End Date: ' + endDate)
+print('Enter path of excel file (or just press enter) to read customer names: ')
 readData = input()
-print('Enter path of excel file which is used as template: ')
+if readData == '':
+    readData = 'CustomerList.xlsx'
+print('Enter path of excel file (or just press enter) which is used as template: ')
 updateData = input()
+if updateData == '':
+    updateData = 'ReportTemplate.xlsx'
+
 q = '"'
 # startDate = "2017-02-01"  # yyyy-mm-dd
 # endDate = "2017-03-01"
@@ -273,6 +277,5 @@ updateWb.save('Report on Invitation Count_' + fileName + '.xlsx')
 print('All Done... :)')
 print('Please find the report named: Report on Invitation Count_' + fileName + '.xlsx')
 conn.close()
-print('Press any key to Exit')
+print('Press Enter to Exit')
 temp = input()
-sys.exit(0)
