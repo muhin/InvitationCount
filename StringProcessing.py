@@ -40,6 +40,7 @@ def fileReName(inputDate):
                   'November', 'December']
     listDate = inputDate.split('-')
     monthNameIndex = int(listDate[1]) - 1
+    return monthNames[monthNameIndex] + ' ' + str(listDate[0])
 
 
 def processEncryptedPassword():
@@ -47,7 +48,7 @@ def processEncryptedPassword():
     msg = f.read()
     msgSplit = msg.split(',')
     bytePassword = bytes(msgSplit[2], 'utf-8')
-    fernetObj = Fernet("hPh9eN7EXljKDTJ4u4KDURBUQ4IqE42f3IBjwDdzb08=")
+    fernetObj = Fernet("sOZocj9a-6utR9DSR62WilsVbtdXsvHjxTXkGGkowks=")
     decryptedPassword = fernetObj.decrypt(bytePassword)
     stringDecryptedPassword = str(decryptedPassword, 'utf-8')
     f.close()
